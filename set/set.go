@@ -10,6 +10,12 @@ type Set[T comparable] interface {
 	IsEmpty() bool        // 检查集合是否为空
 	ToSlice() []T         // 将集合转换为切片
 
+	// 批量操作
+	AddAll(items ...T) int       // 批量添加元素，返回成功添加的元素数量
+	RemoveAll(items ...T) int    // 批量删除元素，返回成功删除的元素数量
+	RetainAll(items ...T) int    // 仅保留指定元素，返回被删除的元素数量
+	ContainsAll(items ...T) bool // 检查是否包含所有指定元素
+
 	// 集合运算
 	Union(other Set[T]) Set[T]               // 并集
 	Intersection(other Set[T]) Set[T]        // 交集

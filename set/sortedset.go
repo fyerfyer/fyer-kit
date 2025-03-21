@@ -125,6 +125,130 @@ func (s *SortedSet[T]) Contains(item T) bool {
 	return exists
 }
 
+// AddAll 批量添加元素到集合中并保持排序，返回成功添加的元素数量
+func (s *SortedSet[T]) AddAll(items ...T) int {
+	// 先过滤出当前集合中不存在的元素
+	newItems := make([]T, 0, len(items))
+	for _, item := range items {
+		if _, exists := s.items[item]; !exists {
+			newItems = append(newItems, item)
+			s.items[item] = struct{}{} // 修复：使用空结构体而不是索引
+		}
+	}
+
+	if len(newItems) == 0 {
+		return 0
+	}
+
+	// 获取当前所有元素，包括新添加的
+	allItems := make([]T, 0, len(s.items))
+	for item := range s.items {
+		allItems = append(allItems, item)
+	}
+
+	// 使用排序函数重新排序所有元素
+	sort.Slice(allItems, func(i, j int) bool {
+		return s.less(allItems[i], allItems[j]) // 修复：使用正确的比较函数调用方式
+	})
+
+	// 更新排序切片
+	s.elements = allItems
+
+	return len(newItems)
+}
+
+// RemoveAll 批量删除元素，返回成功删除的元素数量
+func (s *SortedSet[T]) RemoveAll(items ...T) int {
+	// 先标记要删除的元素
+	toRemove := make(map[T]bool)
+	removed := 0
+
+	for _, item := range items {
+		if _, exists := s.items[item]; exists {
+			toRemove[item] = true
+			removed++
+		}
+	}
+
+	if removed == 0 {
+		return 0
+	}
+
+	// 从map中删除
+	for item := range toRemove {
+		delete(s.items, item)
+	}
+
+	// 重建排序切片
+	newElements := make([]T, 0, len(s.items))
+	for item := range s.items {
+		newElements = append(newElements, item)
+	}
+
+	// 使用排序函数重新排序元素
+	sort.Slice(newElements, func(i, j int) bool {
+		return s.less(newElements[i], newElements[j])
+	})
+
+	// 更新排序切片
+	s.elements = newElements
+
+	return removed
+}
+
+// RetainAll 仅保留指定元素，返回被删除的元素数量
+func (s *SortedSet[T]) RetainAll(items ...T) int {
+	// 创建临时集合存储要保留的元素
+	retain := make(map[T]struct{})
+	for _, item := range items {
+		retain[item] = struct{}{}
+	}
+
+	// 找出需要删除的元素
+	toRemove := make([]T, 0)
+	for item := range s.items {
+		if _, exists := retain[item]; !exists {
+			toRemove = append(toRemove, item)
+		}
+	}
+
+	// 如果没有元素需要删除，直接返回
+	if len(toRemove) == 0 {
+		return 0
+	}
+
+	// 批量删除
+	for _, item := range toRemove {
+		delete(s.items, item)
+	}
+
+	// 重建排序切片
+	newElements := make([]T, 0, len(s.items))
+	for item := range s.items {
+		newElements = append(newElements, item)
+	}
+
+	// 使用排序函数重新排序元素
+	sort.Slice(newElements, func(i, j int) bool {
+		return s.less(newElements[i], newElements[j]) // 修复：使用正确的比较函数调用方式
+	})
+
+	// 更新排序切片
+	s.elements = newElements
+
+	return len(toRemove)
+}
+
+// ContainsAll 检查集合是否包含所有指定元素
+func (s *SortedSet[T]) ContainsAll(items ...T) bool {
+	for _, item := range items {
+		if !s.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
 // Size 返回集合中的元素数量
 func (s *SortedSet[T]) Size() int {
 	return len(s.items)

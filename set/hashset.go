@@ -42,6 +42,63 @@ func (s *HashSet[T]) Contains(item T) bool {
 	return exists
 }
 
+// AddAll 批量添加元素到集合中，返回成功添加的元素数量
+func (s *HashSet[T]) AddAll(items ...T) int {
+	added := 0
+	for _, item := range items {
+		if s.Add(item) {
+			added++
+		}
+	}
+	return added
+}
+
+// RemoveAll 批量删除元素，返回成功删除的元素数量
+func (s *HashSet[T]) RemoveAll(items ...T) int {
+	removed := 0
+	for _, item := range items {
+		if s.Remove(item) {
+			removed++
+		}
+	}
+	return removed
+}
+
+// RetainAll 仅保留指定元素，删除集合中不在给定元素列表中的所有元素
+// 返回被删除的元素数量
+func (s *HashSet[T]) RetainAll(items ...T) int {
+	// 创建临时集合存储要保留的元素
+	retain := make(map[T]struct{})
+	for _, item := range items {
+		retain[item] = struct{}{}
+	}
+
+	// 找出需要删除的元素
+	toRemove := make([]T, 0)
+	for item := range s.items {
+		if _, exists := retain[item]; !exists {
+			toRemove = append(toRemove, item)
+		}
+	}
+
+	// 删除元素
+	for _, item := range toRemove {
+		delete(s.items, item)
+	}
+
+	return len(toRemove)
+}
+
+// ContainsAll 检查集合是否包含所有指定元素
+func (s *HashSet[T]) ContainsAll(items ...T) bool {
+	for _, item := range items {
+		if !s.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
 // Size 返回集合中的元素数量
 func (s *HashSet[T]) Size() int {
 	return len(s.items)

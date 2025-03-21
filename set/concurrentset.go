@@ -38,6 +38,34 @@ func (c *ConcurrentSet[T]) Contains(item T) bool {
 	return c.set.Contains(item)
 }
 
+// AddAll 批量添加元素到集合中，线程安全
+func (c *ConcurrentSet[T]) AddAll(items ...T) int {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	return c.set.AddAll(items...)
+}
+
+// RemoveAll 批量删除元素，线程安全
+func (c *ConcurrentSet[T]) RemoveAll(items ...T) int {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	return c.set.RemoveAll(items...)
+}
+
+// RetainAll 仅保留指定元素，线程安全
+func (c *ConcurrentSet[T]) RetainAll(items ...T) int {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	return c.set.RetainAll(items...)
+}
+
+// ContainsAll 检查集合是否包含所有指定元素，线程安全
+func (c *ConcurrentSet[T]) ContainsAll(items ...T) bool {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return c.set.ContainsAll(items...)
+}
+
 // Size 返回集合中的元素数量，线程安全
 func (c *ConcurrentSet[T]) Size() int {
 	c.lock.RLock()
